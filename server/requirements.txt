@@ -1,0 +1,11 @@
+astapi
+uvicorn
+sqlalchemy
+alembic
+pydantic
+bcrypt
+python-jose
+celery
+redis
+pandas
+yt-dlp

@@ -1,0 +1,6 @@
+{
+    "git.ignoreLimitWarning": true,
+    "json.schemaDownload.enable": false,
+    "python.analysis.extraPaths": ["server"]
+
+}
