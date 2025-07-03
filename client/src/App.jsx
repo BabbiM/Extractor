@@ -1,36 +1,32 @@
-import React from "react";
-import ExtractForm from "./components/ExtractForm";  // Removed /src from path
-import Results from "./components/Results";
-import AnalyticsPanel from "./components/AnalyticsPanel";
-import 'antd/dist/reset.css';  // Updated import for antd v5+ (recommended)
-// or for older versions:
-// import 'antd/dist/antd.min.css';
-
+import React from 'react';
+import { Card, Row, Col } from 'antd';
+import ExtractForm from './components/ExtractForm';
+import 'antd/dist/reset.css';
 function App() {
   return (
-    <div className="app-container" style={{ 
-      padding: "2rem", 
-      fontFamily: "sans-serif",
-      maxWidth: "1200px",
-      margin: "0 auto"
+    <div style={{ 
+      padding: '24px',
+      minHeight: '100vh',
+      backgroundColor: '#f0f2f5'
     }}>
-      <h1 style={{ textAlign: "center", marginBottom: "2rem" }}>YouTube Comment Extractor</h1>
-      
-      <ExtractForm />
-      
-      <div style={{ 
-        display: "flex", 
-        gap: "2rem", 
-        marginTop: "2rem",
-        flexWrap: "wrap"
-      }}>
-        <div style={{ flex: 2, minWidth: "300px" }}>
-          <Results />
-        </div>
-        <div style={{ flex: 1, minWidth: "300px" }}>
-          <AnalyticsPanel />
-        </div>
-      </div>
+      <Row justify="center" align="middle">
+        <Col xs={24} sm={22} md={20} lg={18} xl={16}>
+          <Card
+            title="YouTube Comment Collector"
+            headStyle={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              textAlign: 'center'
+            }}
+            style={{
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }}
+          >
+            <ExtractForm />
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }

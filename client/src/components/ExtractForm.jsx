@@ -13,6 +13,7 @@ function ExtractForm() {
   const [extractionComplete, setExtractionComplete] = useState(false);
   const [downloadComplete, setDownloadComplete] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [hasChangedChannel, setHasChangedChannel] = useState(false);
   const [analytics, setAnalytics] = useState(() => {
     const savedAnalytics = localStorage.getItem('youtube-analytics');
     return savedAnalytics ? JSON.parse(savedAnalytics) : null;
@@ -22,6 +23,12 @@ function ExtractForm() {
     return savedHistory ? JSON.parse(savedHistory) : [];
   });
   const downloadLinkRef = useRef(null);
+
+  // Track channel URL changes
+  useEffect(() => {
+    const savedUrl = localStorage.getItem('last-channel-url') || '';
+    setHasChangedChannel(channelUrl !== savedUrl);
+  }, [channelUrl]);
 
   // Save channel URL and numVideos when they change
   useEffect(() => {
@@ -56,6 +63,7 @@ function ExtractForm() {
     setExtractionComplete(false);
     setDownloadComplete(false);
     setIsDownloading(false);
+    setHasChangedChannel(false);
 
     try {
       const response = await axios.get('http://127.0.0.1:8000/extract_channel', {
@@ -101,7 +109,6 @@ function ExtractForm() {
     setActionStatus('Preparing download...');
 
     try {
-      // Create a hidden download link
       const downloadUrl = `http://127.0.0.1:8000/extract_channel?channel_url=${
         encodeURIComponent(channelUrl.trim())
       }&num_videos=${numVideos}&download=true`;
@@ -117,14 +124,9 @@ function ExtractForm() {
       downloadLinkRef.current = link;
 
       setActionStatus('Downloading...');
-      
-      // Trigger the download
       link.click();
 
-      // This is a workaround to detect when download starts
-      // Note: There's no perfect way to detect download completion client-side
       const checkDownload = setInterval(() => {
-        // Assume download completed after 500ms (adjust as needed)
         clearInterval(checkDownload);
         setDownloadComplete(true);
         setIsDownloading(false);
@@ -146,6 +148,15 @@ function ExtractForm() {
       setActionStatus('Download failed');
       setIsDownloading(false);
       setLoading(false);
+    }
+  };
+
+  const handleChannelChange = (e) => {
+    setChannelUrl(e.target.value);
+    setHasChangedChannel(true);
+    if (downloadComplete) {
+      setExtractionComplete(false);
+      setDownloadComplete(false);
     }
   };
 
@@ -172,6 +183,9 @@ function ExtractForm() {
     },
   ];
 
+  const extractButtonDisabled = !channelUrl || isDownloading || (downloadComplete && !hasChangedChannel);
+  const downloadButtonDisabled = !extractionComplete || isDownloading || (downloadComplete && !hasChangedChannel);
+
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
       <Card title="YouTube Comment Extractor" style={{ marginBottom: '24px' }}>
@@ -180,7 +194,7 @@ function ExtractForm() {
             <Input
               placeholder="Enter YouTube Channel URL (e.g., https://www.youtube.com/@ChannelName)"
               value={channelUrl}
-              onChange={(e) => setChannelUrl(e.target.value)}
+              onChange={handleChannelChange}
               disabled={loading || isDownloading}
               list="channel-history"
             />
@@ -208,7 +222,7 @@ function ExtractForm() {
               type="primary"
               onClick={handleExtract}
               loading={loading && !isDownloading}
-              disabled={!channelUrl || isDownloading || (extractionComplete && !downloadComplete)}
+              disabled={extractButtonDisabled}
               block
             >
               Extract Comments
@@ -220,7 +234,7 @@ function ExtractForm() {
               onClick={handleDownload}
               icon={isDownloading ? <LoadingOutlined /> : <DownloadOutlined />}
               loading={isDownloading}
-              disabled={!extractionComplete || isDownloading}
+              disabled={downloadButtonDisabled}
               block
             >
               {isDownloading ? 'Downloading...' : 'Download CSV'}
@@ -243,6 +257,11 @@ function ExtractForm() {
                 {actionStatus}
                 {isDownloading && <LoadingOutlined style={{ marginLeft: 8 }} />}
               </Text>
+              {downloadComplete && !hasChangedChannel && (
+                <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginTop: '8px' }}>
+                  Enter a new channel URL to extract more comments
+                </Text>
+              )}
               <style>
                 {`
                   @keyframes blink {
