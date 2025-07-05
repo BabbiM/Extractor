@@ -24,19 +24,16 @@ function ExtractForm() {
   });
   const downloadLinkRef = useRef(null);
 
-  // Track channel URL changes
   useEffect(() => {
     const savedUrl = localStorage.getItem('last-channel-url') || '';
     setHasChangedChannel(channelUrl !== savedUrl);
   }, [channelUrl]);
 
-  // Save channel URL and numVideos when they change
   useEffect(() => {
     localStorage.setItem('last-channel-url', channelUrl);
     localStorage.setItem('last-num-videos', numVideos.toString());
   }, [channelUrl, numVideos]);
 
-  // Save channel URL to history when it changes
   useEffect(() => {
     if (channelUrl && !channelHistory.includes(channelUrl)) {
       const updatedHistory = [channelUrl, ...channelHistory].slice(0, 5);
@@ -45,7 +42,6 @@ function ExtractForm() {
     }
   }, [channelUrl]);
 
-  // Clean up download link on unmount
   useEffect(() => {
     return () => {
       if (downloadLinkRef.current) {
@@ -66,7 +62,7 @@ function ExtractForm() {
     setHasChangedChannel(false);
 
     try {
-      const response = await axios.get('http://127.0.0.1:8000/extract_channel', {
+      const response = await axios.get('http://127.0.0.1:8000/api/extract_channel', {
         params: {
           channel_url: channelUrl.trim(),
           num_videos: numVideos
@@ -109,7 +105,7 @@ function ExtractForm() {
     setActionStatus('Preparing download...');
 
     try {
-      const downloadUrl = `http://127.0.0.1:8000/extract_channel?channel_url=${
+      const downloadUrl = `http://127.0.0.1:8000/api/extract_channel?channel_url=${
         encodeURIComponent(channelUrl.trim())
       }&num_videos=${numVideos}&download=true`;
 

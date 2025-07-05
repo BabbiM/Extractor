@@ -1,21 +1,21 @@
 import os
 import csv
-import uuid
+from pathlib import Path
+import pandas as pd
 from .extractor import extract_comments
 from .video_list import get_videos_from_channel
-import pandas as pd
 
-EXTRACTED_DIR = "server/data/extracted"
+EXTRACTED_DIR = "data/extracted"
 
 def extract_channel_comments(channel_url, num_videos):
     print(f"Scraping channel: {channel_url} for {num_videos} videos")
 
+    # Create directory if it doesn't exist
+    Path(EXTRACTED_DIR).mkdir(parents=True, exist_ok=True)
+
     # Get video metadata
     videos = get_videos_from_channel(channel_url, num_videos)
     print(f"Found {len(videos)} videos")
-
-    if not os.path.exists(EXTRACTED_DIR):
-        os.makedirs(EXTRACTED_DIR)
 
     analytics = {}
     total_extracted = 0
@@ -31,7 +31,6 @@ def extract_channel_comments(channel_url, num_videos):
 
         try:
             print(f"Starting to extract comments from: {video_url}")
-            # CHANGED THIS LINE - Now properly unpacking the tuple
             total_comments, comments = extract_comments(video_url)
             print(f"Successfully extracted {total_comments} comments from {video_url}")
 
@@ -39,10 +38,9 @@ def extract_channel_comments(channel_url, num_videos):
                 print(f"No comments found for {video_url}")
                 continue
 
-            filename = video_url.split("v=")[-1].split("&")[0] + ".csv"  # Cleaner filename
+            filename = video_url.split("v=")[-1].split("&")[0] + ".csv"
             csv_path = os.path.join(EXTRACTED_DIR, filename)
             
-            # SAFER DataFrame conversion
             try:
                 comments_df = pd.DataFrame(comments)
                 comments_df.to_csv(csv_path, index=False)
@@ -56,6 +54,7 @@ def extract_channel_comments(channel_url, num_videos):
                 "title": video.get("title", "Untitled"),
                 "total_comments": total_comments,
                 "csv_path": csv_path,
+                "upload_date": video.get("upload_date", "N/A")
             }
             total_extracted += total_comments
 

@@ -1,19 +1,15 @@
-from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import JSONResponse, FileResponse  # Added FileResponse import
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse, FileResponse
 import os
 from datetime import datetime
 import pandas as pd
-from ..utils.yt.dlp.channel_scraper import extract_channel_comments
+from app.utils.yt.dlp.channel_scraper import extract_channel_comments
 
 router = APIRouter()
 
 @router.get("/extract_channel")
-async def extract_channel(request: Request):
+async def extract_channel(channel_url: str, num_videos: int = 1, download: bool = False):
     try:
-        channel_url = request.query_params.get("channel_url")
-        num_videos = int(request.query_params.get("num_videos", 1))
-        download = request.query_params.get("download", "false").lower() == "true"
-
         print(f"Processing request for channel: {channel_url}")
         stats, csv_path = extract_channel_comments(channel_url, num_videos)
 
@@ -34,7 +30,8 @@ async def extract_channel(request: Request):
                 all_comments.append(video_comments)
             
             combined_df = pd.concat(all_comments)
-            combined_csv_path = f"comments/combined_{channel_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            os.makedirs("data/extracted", exist_ok=True)
+            combined_csv_path = f"data/extracted/combined_{channel_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             combined_df.to_csv(combined_csv_path, index=False)
             
             return FileResponse(
