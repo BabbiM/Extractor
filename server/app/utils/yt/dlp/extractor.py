@@ -1,47 +1,49 @@
-import os
-import csv
-from datetime import datetime
-from typing import Tuple, List, Dict
 from yt_dlp import YoutubeDL
+import logging
+from typing import Tuple, List, Dict
+
+logger = logging.getLogger(__name__)
 
 def extract_comments(video_url: str) -> Tuple[int, List[Dict]]:
-    """Original working function"""
+    """Enhanced with validation and logging"""
     ydl_opts = {
         'quiet': True,
         'skip_download': True,
+        'extract_flat': False,
         'getcomments': True,
         'extractor_args': {
             'youtube': {
-                'max_comments': ['100'],
+                'max_comments': ['all'],
                 'comment_sort': ['top']
             }
-        },
-        'sleep_interval': 2,
-        'ignoreerrors': True,
+        }
     }
 
     try:
+        logger.info(f"Extracting comments from {video_url}")
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=False)
-            raw_comments = info.get('comments', [])
+            
+            if not info or 'comments' not in info:
+                logger.warning("No comments found in video info")
+                return 0, []
             
             comments = []
-            for comment in raw_comments:
+            for comment in info['comments']:
+                if not comment:
+                    continue
+                    
                 comments.append({
-                    'comment_id': comment.get('id'),
-                    'text': clean_text(comment.get('text', '')),
+                    'id': comment.get('id', ''),
+                    'text': comment.get('text', '')[:2000].replace('"', "'"),
+                    'author': comment.get('author', ''),
                     'likes': comment.get('like_count', 0),
-                    'author': comment.get('author'),
-                    'author_id': comment.get('author_id'),
-                    'timestamp': comment.get('timestamp'),
-                    'time_text': comment.get('_time_text', ''),
-                    'is_pinned': comment.get('is_pinned', False)
+                    'timestamp': comment.get('timestamp', '')
                 })
             
+            logger.info(f"Extracted {len(comments)} valid comments")
             return len(comments), comments
-    except Exception as e:
-        print(f"Error in extract_comments: {str(e)}")
-        return 0, []
 
-def clean_text(text: str) -> str:
-    return text.replace('\n', ' ').replace('\r', ' ').strip()
+    except Exception as e:
+        logger.error(f"Comment extraction failed: {str(e)}", exc_info=True)
+        return 0, []

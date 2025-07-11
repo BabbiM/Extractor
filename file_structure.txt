@@ -1,0 +1,12 @@
+server/
+├── main.py (unchanged)
+├── app/
+│   ├── routes/
+│   │   └── extractor.py (modified)
+│   └── utils/
+│       └── yt/
+│           ├── dlp/
+│           │   ├── __init__.py
+│           │   ├── extractor.py
+│           │   ├── video_list.py
+│           │   └── channel_scraper.py (maintained)
